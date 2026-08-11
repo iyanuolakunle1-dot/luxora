@@ -3,18 +3,39 @@ import { supabase } from '../lib/supabaseClient';
 import api from '../lib/api';
 
 const GuestAuthContext = createContext(null);
+const STORAGE_KEY = 'luxora_guest_profile';
 
 export function GuestAuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  const [guest, setGuest] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [guest, setGuestState] = useState(() => {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!guest);
+
+  function setGuest(newGuest) {
+    setGuestState(newGuest);
+    try {
+      if (newGuest) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newGuest));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {}
+  }
 
   async function loadGuest() {
     try {
       const { data } = await api.get('/me');
-      setGuest(data.data);
+      if (data?.data) {
+        setGuest(data.data);
+      }
     } catch {
-      setGuest(null);
+      // safe fallback
     }
   }
 
@@ -22,6 +43,7 @@ export function GuestAuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
       if (data.session) await loadGuest();
+      else setGuest(null);
       setLoading(false);
     });
 
@@ -43,7 +65,6 @@ export function GuestAuthProvider({ children }) {
   async function signup(email, password, fullName) {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
-    // Immediately link this new auth user to a `guests` row.
     if (data.session) {
       await api.post('/auth/guest-signup', { full_name: fullName }, {
         headers: { Authorization: `Bearer ${data.session.access_token}` },
@@ -58,9 +79,22 @@ export function GuestAuthProvider({ children }) {
     setGuest(null);
   }
 
-  async function refreshGuest() { await loadGuest(); }
+  async function refreshGuest() {
+    await loadGuest();
+  }
 
-  const value = { session, user: session?.user || null, guest, loading, login, signup, logout, refreshGuest };
+  const value = {
+    session,
+    user: session?.user || null,
+    guest,
+    setGuest,
+    loading,
+    login,
+    signup,
+    logout,
+    refreshGuest,
+  };
+
   return <GuestAuthContext.Provider value={value}>{children}</GuestAuthContext.Provider>;
 }
 

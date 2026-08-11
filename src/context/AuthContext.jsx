@@ -3,18 +3,39 @@ import { supabase } from '../lib/supabaseClient';
 import api from '../lib/api';
 
 const AuthContext = createContext(null);
+const STORAGE_KEY = 'luxora_admin_profile';
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfileState] = useState(() => {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!profile);
+
+  function setProfile(newProfile) {
+    setProfileState(newProfile);
+    try {
+      if (newProfile) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newProfile));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {}
+  }
 
   async function loadProfile() {
     try {
       const { data } = await api.get('/auth/me');
-      setProfile(data.profile);
+      if (data?.profile) {
+        setProfile(data.profile);
+      }
     } catch {
-      setProfile(null);
+      // Keep cached profile if network fails, or clear if unauthorized
     }
   }
 
@@ -22,6 +43,7 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
       if (data.session) await loadProfile();
+      else setProfile(null);
       setLoading(false);
     });
 
