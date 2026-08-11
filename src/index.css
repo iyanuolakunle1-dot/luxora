@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  @apply bg-luxora-bg text-luxora-text font-sans antialiased;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #262b38; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #333a4a; }
+
+@layer components {
+  .card {
+    @apply bg-luxora-card border border-luxora-border rounded-2xl shadow-card;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-gold-gradient bg-gradient-to-r from-luxora-gold-light via-luxora-gold to-luxora-gold-dark
+           text-luxora-bg shadow-glow hover:brightness-110;
+  }
+  .btn-outline {
+    @apply btn border border-luxora-border text-luxora-text hover:border-luxora-gold hover:text-luxora-gold bg-transparent;
+  }
+  .btn-ghost {
+    @apply btn text-luxora-muted hover:text-luxora-text hover:bg-white/5;
+  }
+  .btn-danger {
+    @apply btn bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20;
+  }
+
+  .input {
+    @apply w-full bg-luxora-surface border border-luxora-border rounded-xl px-4 py-2.5 text-sm text-luxora-text
+           placeholder:text-luxora-muted focus:outline-none focus:ring-2 focus:ring-luxora-gold/40 focus:border-luxora-gold/60
+           transition-all;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-luxora-muted mb-1.5 uppercase tracking-wide;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-green { @apply badge bg-emerald-500/15 text-emerald-400; }
+  .badge-yellow { @apply badge bg-amber-500/15 text-amber-400; }
+  .badge-red { @apply badge bg-red-500/15 text-red-400; }
+  .badge-blue { @apply badge bg-sky-500/15 text-sky-400; }
+  .badge-purple { @apply badge bg-violet-500/15 text-violet-400; }
+  .badge-gray { @apply badge bg-white/10 text-luxora-muted; }
+
+  .table-wrap { @apply overflow-x-auto rounded-xl border border-luxora-border; }
+  .table-base { @apply w-full text-sm text-left border-collapse min-w-[720px]; }
+  .table-base thead th {
+    @apply text-xs uppercase tracking-wide text-luxora-muted font-semibold px-4 py-3 bg-white/[0.03] border-b border-luxora-border whitespace-nowrap;
+  }
+  .table-base tbody td {
+    @apply px-4 py-3 border-b border-luxora-border/60 whitespace-nowrap;
+  }
+  .table-base tbody tr {
+    @apply transition-colors hover:bg-white/[0.03];
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden bg-white/5 rounded-lg;
+    background-image: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 100%);
+    background-size: 1000px 100%;
+    @apply animate-shimmer;
+  }
+}
