@@ -31,7 +31,7 @@ export default function GuestProfile() {
       setForm({
         full_name: guest.full_name || '',
         phone: guest.phone || '',
-        date_of_birth: guest.date_of_birth || '',
+        date_of_birth: guest.date_of_birth ? guest.date_of_birth.split('T')[0] : '',
         gender: guest.gender || '',
         nationality: guest.nationality || '',
         about: guest.about || '',
@@ -50,8 +50,11 @@ export default function GuestProfile() {
     setUploading(true);
     try {
       const res = await uploadViaServer(file, 'luxora/guest-avatars');
-      setForm((f) => ({ ...f, avatar_url: res.url }));
-      notify.success('Photo ready — click "Save Changes" below to save!');
+      const newAvatar = res.url;
+      setForm((f) => ({ ...f, avatar_url: newAvatar }));
+      await api.put('/me', { avatar_url: newAvatar });
+      await refreshGuest();
+      notify.success('Profile photo updated successfully!');
     } catch {
       notify.error('Photo upload failed. Please try a different image.');
     } finally {

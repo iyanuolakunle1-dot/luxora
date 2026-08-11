@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Building2, Shield, Key, Save, Loader2, CheckCircle2, Crown, Calendar, Lock } from 'lucide-react';
+import { User, Mail, Phone, Building2, Shield, Key, Save, Loader2, CheckCircle2, Crown, Calendar, Lock, Camera } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
+import { uploadViaServer } from '../../lib/cloudinary';
 import api from '../../lib/api';
 import { notify } from '../../lib/toast';
 
 export default function AdminProfile() {
-  const { profile, user } = useAuth();
+  const { profile, user, refreshProfile, setProfile } = useAuth();
 
   const [form, setForm] = useState({
     full_name: '',
@@ -19,6 +20,7 @@ export default function AdminProfile() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Password change state
   const [newPassword, setNewPassword] = useState('');
@@ -37,16 +39,42 @@ export default function AdminProfile() {
     }
   }, [profile, user]);
 
+  async function handlePhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await uploadViaServer(file, 'luxora/admin-avatars');
+      const newAvatar = res.url;
+      setForm((f) => ({ ...f, avatar_url: newAvatar }));
+      const { data } = await api.put('/auth/profile', { avatar_url: newAvatar });
+      if (data?.profile && setProfile) setProfile(data.profile);
+      if (refreshProfile) await refreshProfile();
+      notify.success('Profile photo updated successfully!');
+    } catch (err) {
+      console.error(err);
+      notify.error('Photo upload failed. Please try a different image.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSaveProfile(e) {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.put('/auth/profile', {
+      const res = await api.put('/auth/profile', {
         full_name: form.full_name,
         phone: form.phone,
         department: form.department,
         avatar_url: form.avatar_url,
       });
+      if (res.data?.profile && setProfile) {
+        setProfile(res.data.profile);
+      }
+      if (refreshProfile) {
+        await refreshProfile();
+      }
       notify.success('Profile details updated successfully');
     } catch (err) {
       notify.error(err?.response?.data?.error || 'Failed to update profile');
@@ -95,17 +123,23 @@ export default function AdminProfile() {
         className="card p-6 relative overflow-hidden bg-gradient-to-r from-luxora-surface via-luxora-surface to-luxora-gold/5 border-luxora-gold/20"
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 relative z-10">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-gold-gradient bg-gradient-to-br from-luxora-gold-light to-luxora-gold-dark flex items-center justify-center text-luxora-bg text-2xl font-bold font-display shadow-lg shadow-luxora-gold/20 overflow-hidden">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-2xl bg-gold-gradient bg-gradient-to-br from-luxora-gold-light to-luxora-gold-dark flex items-center justify-center text-luxora-bg text-2xl font-bold font-display shadow-lg shadow-luxora-gold/20 overflow-hidden relative">
               {form.avatar_url ? (
                 <img src={form.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
                 (form.full_name || 'A')[0]?.toUpperCase()
               )}
+              {uploading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs">
+                  <Loader2 size={18} className="animate-spin text-luxora-gold" />
+                </div>
+              )}
             </div>
-            <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-luxora-surface flex items-center justify-center text-[10px] text-white font-bold" title="Active">
-              ✓
-            </span>
+            <label className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-luxora-gold text-luxora-bg cursor-pointer hover:bg-luxora-gold-light shadow-md transition-all flex items-center justify-center" title="Upload Photo">
+              <Camera size={13} />
+              <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} disabled={uploading} />
+            </label>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -209,14 +243,21 @@ export default function AdminProfile() {
             </div>
 
             <div>
-              <label className="label">Avatar Image URL</label>
-              <input
-                type="url"
-                value={form.avatar_url}
-                onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
-                className="input"
-                placeholder="https://images.unsplash.com/... or Cloudinary URL"
-              />
+              <label className="label">Avatar Image</label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={form.avatar_url}
+                  onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
+                  className="input flex-1"
+                  placeholder="https://images.unsplash.com/... or Cloudinary URL"
+                />
+                <label className="btn-outline cursor-pointer text-xs shrink-0 flex items-center gap-1.5 px-3">
+                  <Camera size={14} />
+                  {uploading ? 'Uploading…' : 'Upload'}
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} disabled={uploading} />
+                </label>
+              </div>
             </div>
 
             <div className="pt-4 flex justify-end">

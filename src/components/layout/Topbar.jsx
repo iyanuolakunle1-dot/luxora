@@ -37,8 +37,12 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
 
         <div className="relative">
           <button onClick={() => setMenuOpen((v) => !v)} className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-white/5 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gold-gradient bg-gradient-to-br from-luxora-gold-light to-luxora-gold-dark flex items-center justify-center text-xs font-bold text-luxora-bg">
-              {(profile?.full_name || 'A')[0]}
+            <div className="w-8 h-8 rounded-full bg-gold-gradient bg-gradient-to-br from-luxora-gold-light to-luxora-gold-dark flex items-center justify-center text-xs font-bold text-luxora-bg overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                (profile?.full_name || 'A')[0]
+              )}
             </div>
             <div className="hidden sm:block text-left leading-tight">
               <p className="text-sm font-semibold text-luxora-text">{profile?.full_name || 'Admin'}</p>

@@ -45,10 +45,16 @@ export function AuthProvider({ children }) {
     setProfile(null);
   }
 
+  async function refreshProfile() {
+    await loadProfile();
+  }
+
   const value = {
     session,
     user: session?.user || null,
     profile,
+    setProfile,
+    refreshProfile,
     role: profile?.roles?.slug || null,
     loading,
     login,
