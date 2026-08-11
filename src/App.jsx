@@ -32,6 +32,7 @@ import SettingsPage from './pages/admin/Settings';
 import SystemLogs from './pages/admin/SystemLogs';
 import WebsiteManagement from './pages/admin/WebsiteManagement';
 import EmailTemplates from './pages/admin/EmailTemplates';
+import AdminProfile from './pages/admin/Profile';
 // Guest Portal pages
 import GuestLogin from './pages/guest/Login';
 import GuestSignup from './pages/guest/Signup';
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="website" element={<WebsiteManagement />} />
         <Route path="email-templates" element={<EmailTemplates />} />
         <Route path="integrations" element={<Integrations />} />
+        <Route path="profile" element={<AdminProfile />} />
       </Route>
 
       {/* ---------- Guest Portal auth ---------- */}

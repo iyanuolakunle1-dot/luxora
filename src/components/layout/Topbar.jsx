@@ -57,10 +57,22 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
                 className="absolute right-0 mt-2 w-48 card p-2 shadow-glow"
                 onMouseLeave={() => setMenuOpen(false)}
               >
-                <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-luxora-muted hover:text-luxora-text hover:bg-white/5">
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate('/admin/profile');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-luxora-muted hover:text-luxora-text hover:bg-white/5"
+                >
                   <User size={15} /> Profile
                 </button>
-                <button onClick={() => navigate('/admin/settings')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-luxora-muted hover:text-luxora-text hover:bg-white/5">
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate('/admin/settings');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-luxora-muted hover:text-luxora-text hover:bg-white/5"
+                >
                   <Settings size={15} /> Settings
                 </button>
                 <hr className="border-luxora-border my-1" />
