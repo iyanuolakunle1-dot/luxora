@@ -15,7 +15,7 @@ export function GuestAuthProvider({ children }) {
       return null;
     }
   });
-  const [loading, setLoading] = useState(!guest);
+  const [loading, setLoading] = useState(true);
 
   function setGuest(newGuest) {
     setGuestState(newGuest);
@@ -30,7 +30,7 @@ export function GuestAuthProvider({ children }) {
 
   async function loadGuest() {
     try {
-      const { data } = await api.get('/me');
+      const { data } = await api.get('/me', { skipCache: true });
       if (data?.data) {
         setGuest(data.data);
       }
@@ -40,20 +40,34 @@ export function GuestAuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
       setSession(data.session);
-      if (data.session) await loadGuest();
-      else setGuest(null);
+      if (data.session) {
+        await loadGuest();
+      } else {
+        setGuest(null);
+      }
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!mounted) return;
       setSession(newSession);
-      if (newSession) await loadGuest();
-      else setGuest(null);
+      if (newSession) {
+        await loadGuest();
+      } else {
+        setGuest(null);
+      }
+      setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function login(email, password) {
@@ -77,6 +91,7 @@ export function GuestAuthProvider({ children }) {
   async function logout() {
     await supabase.auth.signOut();
     setGuest(null);
+    setSession(null);
   }
 
   async function refreshGuest() {

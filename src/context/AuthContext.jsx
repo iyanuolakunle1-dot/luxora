@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
-  const [loading, setLoading] = useState(!profile);
+  const [loading, setLoading] = useState(true);
 
   function setProfile(newProfile) {
     setProfileState(newProfile);
@@ -30,30 +30,44 @@ export function AuthProvider({ children }) {
 
   async function loadProfile() {
     try {
-      const { data } = await api.get('/auth/me');
+      const { data } = await api.get('/auth/me', { skipCache: true });
       if (data?.profile) {
         setProfile(data.profile);
       }
     } catch {
-      // Keep cached profile if network fails, or clear if unauthorized
+      // safe fallback
     }
   }
 
   useEffect(() => {
+    let mounted = true;
+
     supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
       setSession(data.session);
-      if (data.session) await loadProfile();
-      else setProfile(null);
+      if (data.session) {
+        await loadProfile();
+      } else {
+        setProfile(null);
+      }
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!mounted) return;
       setSession(newSession);
-      if (newSession) await loadProfile();
-      else setProfile(null);
+      if (newSession) {
+        await loadProfile();
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function login(email, password) {
@@ -65,6 +79,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     await supabase.auth.signOut();
     setProfile(null);
+    setSession(null);
   }
 
   async function refreshProfile() {
